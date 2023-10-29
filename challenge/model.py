@@ -2,6 +2,8 @@ import pandas as pd
 from typing import Tuple, Union, List
 import numpy as np
 from datetime import datetime
+from xgboost import XGBClassifier
+from imblearn.over_sampling import SMOTE
 
 
 class DelayModel:
@@ -10,6 +12,7 @@ class DelayModel:
         self
     ):
         self._model = None  # Model should be saved in this attribute.
+        self._top_features = None  # Top features should be saved in this attribute.
 
     def preprocess(
         self,
@@ -89,7 +92,26 @@ class DelayModel:
             features (pd.DataFrame): preprocessed data.
             target (pd.DataFrame): target.
         """
-        return
+        # Equilibrate the data with SMOTE
+        smote = SMOTE()
+        features_resampled, target_resampled = smote.fit_resample(features, target)
+
+        # Initialization of the model and training
+        xgb_model = XGBClassifier()
+        xgb_model.fit(features_resampled, target_resampled)
+
+        # Top 10 features
+        feature_importances = xgb_model.feature_importances_
+        self._top_features = sorted(range(len(feature_importances)),
+                                    key=lambda k: feature_importances[k],
+                                    reverse=True)[:10]
+
+        # Train the model with top 10 features
+        self._model = XGBClassifier()
+        self._model.fit(features_resampled.iloc[:, self._top_features], target_resampled)
+
+        return self._model
+
 
     def predict(
         self,
@@ -104,4 +126,8 @@ class DelayModel:
         Returns:
             (List[int]): predicted targets.
         """
-        return
+        # Make the prediction with the 10 most important features
+        features_selected = features.iloc[:, self._top_features]
+        predictions = self._model.predict(features_selected)
+
+        return list(predictions)
