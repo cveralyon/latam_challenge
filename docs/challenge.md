@@ -1,3 +1,6 @@
+### Additional Notes
+
+Due to work commitments and personal reasons, the start of the development process was delayed. As a result, focus was primarily placed on successfully completing Parts 1 and 2 of the challenge. Configuration files for Part 4 were also set up, although full deployment could not be achieved within the available time frame.
 
 ## Metric Formula Correction
 
